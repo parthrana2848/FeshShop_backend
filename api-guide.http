@@ -1,0 +1,1210 @@
+### API USAGE GUIDE
+### ----------------------------------------------------
+### PREREQUISITES:
+### 1. Install "REST Client" extension in VS Code.
+### 2. Make sure your server is running (`npm run dev` or `npm run start`).
+### 3. Replace the `@token` variable below with a valid JWT token. 
+###    (For Admin endpoints, make sure the JWT payload has { "role": "ADMIN" })
+
+### Prerequisites Variables
+@baseUrl = http://localhost:3000/api
+@token = YOUR_VALID_JWT_TOKEN
+@categoryId = REPLACE_WITH_CATEGORY_ID
+@productId = REPLACE_WITH_PRODUCT_ID
+@userId = REPLACE_WITH_USER_ID
+@companyId = REPLACE_WITH_COMPANY_ID
+@orderId = REPLACE_WITH_ORDER_ID
+@customerId = REPLACE_WITH_CUSTOMER_ID
+@festivalId = REPLACE_WITH_FESTIVAL_ID
+
+### ====================================================
+### 🔐 AUTH APIs
+### ====================================================
+
+### 1. Register User
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "Password123"
+}
+
+### ----------------------------------------------------
+### 2. Login User
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "john@example.com",
+  "password": "Password123"
+}
+
+### ----------------------------------------------------
+### 3. Logout User
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+### ----------------------------------------------------
+### 4. Forgot Password
+POST {{baseUrl}}/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "john@example.com"
+}
+
+### ----------------------------------------------------
+### 5. Reset Password
+# Pass your OTP directly into the body here
+POST {{baseUrl}}/auth/reset-password/YOUR_OTP_TOKEN
+Content-Type: application/json
+
+{
+  "email": "john@example.com",
+  "otp": "123456",
+  "password": "NewPassword123"
+}
+
+### ====================================================
+### 📦 CATEGORY APIs
+### ====================================================
+
+### 1. Create Category [ADMIN]
+# Requires: name (string, required)
+# Response: 201 Created with category object
+POST {{baseUrl}}/categories
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Electronics"
+}
+
+### ----------------------------------------------------
+### 2. List Categories [PUBLIC/USER]
+# Supports optional queries: ?page=1&limit=10&search=electro&startDate=2024-01-01&endDate=2024-12-31
+# Response: 200 OK with paginated categories array
+GET {{baseUrl}}/categories?page=1&limit=10
+Content-Type: application/json
+
+### ----------------------------------------------------
+### 3. Get Single Category [PUBLIC/USER]
+# Requires: valid category ID (24-char hex)
+# Response: 200 OK with category object or 404 if not found
+GET {{baseUrl}}/categories/{{categoryId}}
+Content-Type: application/json
+
+### ----------------------------------------------------
+### 4. Update Category [ADMIN]
+# Requires: valid category ID, optional name
+# Response: 200 OK with updated category object
+PUT {{baseUrl}}/categories/{{categoryId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Home Appliances"
+}
+
+### ----------------------------------------------------
+### 5. Delete Category (Soft Delete) [ADMIN]
+# Requires: valid category ID
+# Response: 200 OK with success message
+DELETE {{baseUrl}}/categories/{{categoryId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+
+### ====================================================
+### 📦 PRODUCT APIs
+### ====================================================
+
+### 1. Create Product [ADMIN]
+# IMPORTANT: "categories" must be an array of valid Category ObjectId(s).
+# "company" is required. "festivals", "price", "stock", "attributes" are optional.
+POST {{baseUrl}}/products
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Samsung Galaxy S24",
+  "categories": ["{{categoryId}}"],
+  "company": "{{companyId}}",
+  "festivals": [],
+  "price": 999.99,
+  "stock": 50,
+  "attributes": {
+    "color": "Black",
+    "storage": "256GB"
+  }
+}
+
+### ----------------------------------------------------
+### 2. List Products [PUBLIC/USER]
+# Supports optional queries: ?page=1&limit=10&search=samsung&category=ID1,ID2&festivals=ID1,ID2&company=ID&startDate=2024-01-01&endDate=2024-12-31
+GET {{baseUrl}}/products?page=1&limit=10
+Content-Type: application/json
+
+### ----------------------------------------------------
+### 3. Get Single Product [PUBLIC/USER]
+GET {{baseUrl}}/products/{{productId}}
+Content-Type: application/json
+
+### ----------------------------------------------------
+### 4. Update Product [ADMIN]
+PUT {{baseUrl}}/products/{{productId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Samsung Galaxy S24 Ultra",
+  "categories": ["{{categoryId}}"],
+  "company": "{{companyId}}",
+  "festivals": [],
+  "price": 1199.99,
+  "stock": 30,
+  "attributes": {
+    "color": "Black",
+    "storage": "512GB"
+  }
+}
+
+### ----------------------------------------------------
+### 5. Delete Product (Soft Delete) [ADMIN]
+DELETE {{baseUrl}}/products/{{productId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+
+### ====================================================
+### 🛒 ORDER APIs
+### ====================================================
+
+### 1. Create Order [ADMIN]
+# Creates a new order with customer and items details
+# Required: customerSnapshot (name, phone), items array (product, name, quantity, price, total)
+# Optional: customer (customer ID), discount, festival, paymentMethod, paymentStatus
+# Response: 201 Created with order object
+POST {{baseUrl}}/orders
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "customer": "{{customerId}}",
+  "customerSnapshot": {
+    "name": "John Doe",
+    "phone": "9876543210"
+  },
+  "items": [
+    {
+      "product": "{{productId}}",
+      "name": "Samsung Galaxy S24",
+      "quantity": 2,
+      "price": 999.99,
+      "total": 1999.98
+    },
+    {
+      "product": "{{productId}}",
+      "name": "Phone Case",
+      "quantity": 1,
+      "price": 29.99,
+      "total": 29.99
+    }
+  ],
+  "subTotal": 2029.97,
+  "discount": 50.00,
+  "totalAmount": 1979.97,
+  "festival": "{{festivalId}}",
+  "paymentMethod": "CASH",
+  "paymentStatus": "PENDING"
+}
+
+### RESPONSE EXAMPLE:
+# HTTP/1.1 201 Created
+# {
+#   "statusCode": 201,
+#   "data": {
+#     "_id": "507f1f77bcf86cd799439011",
+#     "customer": "507f1f77bcf86cd799439012",
+#     "customerSnapshot": {
+#       "name": "John Doe",
+#       "phone": "9876543210"
+#     },
+#     "items": [
+#       {
+#         "product": "507f1f77bcf86cd799439013",
+#         "name": "Samsung Galaxy S24",
+#         "quantity": 2,
+#         "price": 999.99,
+#         "total": 1999.98
+#       },
+#       {
+#         "product": "507f1f77bcf86cd799439013",
+#         "name": "Phone Case",
+#         "quantity": 1,
+#         "price": 29.99,
+#         "total": 29.99
+#       }
+#     ],
+#     "subTotal": 2029.97,
+#     "discount": 50.00,
+#     "totalAmount": 1979.97,
+#     "festival": "507f1f77bcf86cd799439014",
+#     "paymentMethod": "CASH",
+#     "paymentStatus": "PENDING",
+#     "isDeleted": false,
+#     "createdAt": "2024-05-11T10:30:00.000Z",
+#     "updatedAt": "2024-05-11T10:30:00.000Z",
+#     "__v": 0
+#   },
+#   "message": "Order created successfully"
+# }
+
+### ----------------------------------------------------
+### 2. List Orders [PUBLIC/USER]
+# Supports optional queries: ?page=1&limit=10&search=john&paymentMethod=CASH&paymentStatus=PAID&customer=ID&festival=ID&phone=PHONE&minAmount=100&maxAmount=5000&startDate=2024-01-01&endDate=2024-12-31
+# Response: 200 OK with paginated orders array and pagination metadata
+GET {{baseUrl}}/orders?page=1&limit=10
+Content-Type: application/json
+
+### RESPONSE EXAMPLE:
+# HTTP/1.1 200 OK
+# {
+#   "statusCode": 200,
+#   "data": [
+#     {
+
+### RESPONSE EXAMPLE:
+# HTTP/1.1 200 OK
+# {
+#   "statusCode": 200,
+#   "data": {
+# Response: 200 OK with updated order object
+PUT {{baseUrl}}/orders/{{orderId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "customerSnapshot": {
+    "name": "John Doe Updated",
+    "phone": "9876543210"
+  },
+  "discount": 75.00,
+  "paymentStatus": "PAID",
+  "paymentMethod": "UPI"
+}
+
+### RESPONSE EXAMPLE:
+# HTTP/1.1 200 OK
+# {
+#   "statusCode": 200,
+#   "data": {
+#     "_id": "507f1f77bcf86cd799439011",
+#     "customer": "507f1f77bcf86cd799439012",
+#     "customerSnapshot": {
+#       "name": "John Doe Updated",
+#       "phone": "9876543210"
+#     },
+#     "items": [
+#       {
+#         "product": "507f1f77bcf86cd799439013",
+#         "name": "Samsung Galaxy S24",
+#         "quantity": 2,
+#         "price": 999.99,
+#         "total": 1999.98
+#       },
+#       {
+#         "product": "507f1f77bcf86cd799439013",
+#         "name": "Phone Case",
+#         "quantity": 1,
+#         "price": 29.99,
+#         "total": 29.99
+#       }
+#     ],
+#     "subTotal": 2029.97,
+#     "discount": 75.00,
+#     "totalAmount": 1954.97,
+#     "festival": "507f1f77bcf86cd799439014",
+#     "paymentMethod": "UPI",
+#     "paymentStatus": "PAID",
+#     "isDeleted": false,
+#     "createdAt": "2024-05-11T10:30:00.000Z",
+#     "updatedAt": "2024-05-11T11:45:00.000Z",
+#     "__v": 0
+#   },
+#   "message": "Order updated successfully"
+# #         "total": 1999.98
+#       },
+#       {
+#         "product": "507f1f77bcf86cd799439013",
+#         "name": "Phone Case",
+#         "quantity": 1,
+#         "price": 29.99,
+# Response: 200 OK with success message
+DELETE {{baseUrl}}/orders/{{orderId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+### RESPONSE EXAMPLE:
+# HTTP/1.1 200 OK
+# {
+#   "statusCode": 200,
+#   "data": null,
+#   "message": "Order deleted successfully"
+# }
+#     "subTotal": 2029.97,
+#     "discount": 50.00,
+#     "totalAmount": 1979.97,
+#     "festival": "507f1f77bcf86cd799439014",
+#     "paymentMethod": "CASH",
+#     "paymentStatus": "PENDING",
+#     "isDeleted": false,
+#     "createdAt": "2024-05-11T10:30:00.000Z",
+#     "updatedAt": "2024-05-11T10:30:00.000Z",
+#     "__v": 0
+#   },
+#   "message": "Order retrieved successfully"
+# }
+#       "_id": "507f1f77bcf86cd799439011",
+#       "customer": "507f1f77bcf86cd799439012",
+#       "customerSnapshot": {
+#         "name": "John Doe",
+#         "phone": "9876543210"
+#       },
+#       "items": [
+#         {
+#           "product": "507f1f77bcf86cd799439013",
+#           "name": "Samsung Galaxy S24",
+#           "quantity": 2,
+#           "price": 999.99,
+#           "total": 1999.98
+#         }
+#       ],
+#       "subTotal": 1999.98,
+#       "discount": 50.00,
+#       "totalAmount": 1949.98,
+#       "festival": "507f1f77bcf86cd799439014",
+#       "paymentMethod": "CASH",
+#       "paymentStatus": "PAID",
+#       "isDeleted": false,
+#       "createdAt": "2024-05-11T10:30:00.000Z",
+#       "updatedAt": "2024-05-11T10:30:00.000Z"
+#     }
+# Note: Products are re-validated and prices are updated to latest
+# Response: 201 Created with new order object
+POST {{baseUrl}}/orders/reorder/{{orderId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "paymentMethod": "CARD",
+  "paymentStatus": "PENDING"
+}
+
+### RESPONSE EXAMPLE:
+# HTTP/1.1 201 Created
+# {
+#   "statusCode": 201,
+#   "data": {
+#     "_id": "507f1f77bcf86cd799439022",
+#     "customer": "507f1f77bcf86cd799439012",
+#     "customerSnapshot": {
+#       "name": "John Doe",
+#       "phone": "9876543210"
+#     },
+#     "items": [
+#       {
+#         "product": "507f1f77bcf86cd799439013",
+#         "name": "Samsung Galaxy S24",
+#         "quantity": 2,
+#         "price": 1049.99,
+#         "total": 2099.98
+#       },
+#       {
+#         "product": "507f1f77bcf86cd799439013",
+#         "name": "Phone Case",
+#         "quantity": 1,
+#         "price": 34.99,
+#         "total": 34.99
+#       }
+#     ],
+#     "subTotal": 2134.97,
+#     "discount": 50.00,
+#     "totalAmount": 2084.97,
+#     "festival": "507f1f77bcf86cd799439014",
+#     "paymentMethod": "CARD",
+#     "paymentStatus": "PENDING",
+#     "isDeleted": false,
+#     "createdAt": "2024-05-11T12:00:00.000Z",
+#     "updatedAt": "2024-05-11T12:00:00.000Z",
+#     "__v": 0
+#   },
+#   "message": "Order reordered successfully"
+# #     "hasNextPage": true,
+#     "hasPrevPage": false
+#   }
+# }
+
+### ----------------------------------------------------
+### 3. Get Single Order [PUBLIC/USER]
+# Requires: valid order ID (24-char hex)
+# Response: 200 OK with complete order object or 404 if not found
+GET {{baseUrl}}/orders/{{orderId}}
+Content-Type: application/json
+
+### ----------------------------------------------------
+### 4. Update Order [ADMIN]
+# Requires: valid order ID, optional fields to update
+# Can update: customer, customerSnapshot, items, discount, festival, paymentMethod, paymentStatus
+# At least one field is required
+PUT {{baseUrl}}/orders/{{orderId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "customerSnapshot": {
+    "name": "John Doe Updated",
+    "phone": "9876543210"
+  },
+  "discount": 75.00,
+  "paymentStatus": "PAID",
+  "paymentMethod": "UPI"
+}
+
+### ----------------------------------------------------
+### 5. Delete Order - Soft Delete [ADMIN]
+# Requires: valid order ID
+# Order data is preserved but marked as deleted
+DELETE {{baseUrl}}/orders/{{orderId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+### ----------------------------------------------------
+### 6. Reorder [ADMIN]
+# Creates a new order from an existing order
+# Requires: valid order ID from previous order
+# Optional: paymentMethod, paymentStatus (can be different from original)
+POST {{baseUrl}}/orders/reorder/{{orderId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "paymentMethod": "CARD",
+  "paymentStatus": "PENDING"
+}
+
+
+
+### 1. Create Section [ADMIN]
+# Type must be one of: "banner", "grid", "horizontal"
+# DataSource is required (e.g., static or dynamic)
+# Discriminator-specific fields:
+# - banner: items [{ image, cta: { type: "product"|"category", value: ID } }]
+# - grid: columns, items [{ title, image, cta: { type, value } }]
+# - horizontal: items [{ title, image, cta: { type, value } }]
+POST {{baseUrl}}/sections
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "type": "banner",
+  "title": "Summer Sale Banner",
+  "displayOrder": 1,
+  "status": "published",
+  "isActive": true,
+  "dataSource": {
+    "type": "static"
+  },
+  "items": [
+    {
+      "image": "https://example.com/banner1.jpg",
+      "cta": {
+        "type": "category",
+        "value": "{{categoryId}}"
+      }
+    }
+  ]
+}
+
+### ----------------------------------------------------
+### 2. List Sections [PUBLIC/USER]
+# Supports optional queries for filtering/pagination
+GET {{baseUrl}}/sections?page=1&limit=10
+Content-Type: application/json
+
+### ----------------------------------------------------
+### 3. Get Single Section [PUBLIC/USER]
+GET {{baseUrl}}/sections/{{sectionId}}
+Content-Type: application/json
+
+### ----------------------------------------------------
+### 4. Update Section [ADMIN]
+PUT {{baseUrl}}/sections/{{sectionId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Updated Summer Banner",
+  "status": "published",
+  "displayOrder": 2
+}
+
+### ----------------------------------------------------
+### 5. Delete Section [ADMIN]
+DELETE {{baseUrl}}/sections/{{sectionId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+### ====================================================
+### 👥 USER MANAGEMENT APIs [ADMIN ONLY]
+
+### 1. Create User [ADMIN]
+# Creates a new user with hashed password
+POST {{baseUrl}}/users
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Jane Smith",
+  "email": "jane@example.com",
+  "password": "SecurePass123",
+  "role": "USER"
+}
+
+### ----------------------------------------------------
+### 2. List All Users [ADMIN]
+# Supports optional queries: ?page=1&limit=10&search=jane&role=USER&startDate=2024-01-01&endDate=2024-12-31
+GET {{baseUrl}}/users?page=1&limit=10
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+### ----------------------------------------------------
+### 3. Get Single User [ADMIN]
+GET {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+### ----------------------------------------------------
+### 4. Update User [ADMIN]
+# Can update: name, email, role
+# Cannot update password through this endpoint (use change-password instead)
+PUT {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Jane Doe Smith",
+  "role": "ADMIN"
+}
+
+### ----------------------------------------------------
+### 5. Delete User - Soft Delete [ADMIN]
+# User data is preserved but marked as deleted
+DELETE {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+### ----------------------------------------------------
+### 6. Change Password [AUTHENTICATED USER]
+# Any authenticated user can change their own password
+# Requires old password verification
+POST {{baseUrl}}/users/change-password
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "oldPassword": "CurrentPassword123",
+  "newPassword": "NewPassword456"
+}
+
+
+### ====================================================
+### 📹 WEBRTC VIDEO CALL - SOCKET.IO EVENTS
+### ====================================================
+### 
+### NOTE: These are Socket.IO events, NOT REST APIs.
+### Use a Socket.IO client to connect and emit/listen to events.
+### 
+### CONNECTION URL: ws://localhost:3000
+### AUTHENTICATION: Pass JWT token in handshake
+###
+### ────────────────────────────────────────────────────
+### 🔌 CONNECTION EXAMPLE (JavaScript/TypeScript)
+### ────────────────────────────────────────────────────
+###
+### import { io } from 'socket.io-client';
+###
+### const socket = io('http://localhost:3000', {
+###   auth: { token: 'YOUR_JWT_TOKEN' },
+###   transports: ['websocket'],
+### });
+###
+### socket.on('connect', () => console.log('Connected:', socket.id));
+### socket.on('connect_error', (err) => console.error('Auth failed:', err.message));
+###
+### ────────────────────────────────────────────────────
+### 📤 CLIENT → SERVER EVENTS
+### ────────────────────────────────────────────────────
+###
+### 1. register-user
+###    Auto-called on connection. Registers user for calls.
+###    Payload: { userId: string }
+###    Response (via callback): { success: boolean, message?: string }
+###
+### 2. call-user
+###    Initiate a video call to another user.
+###    Payload: {
+###      callerId: string,      // Your user ID (must match authenticated user)
+###      receiverId: string,    // Target user's ID
+###      offer: {               // WebRTC SDP offer
+###        type: "offer",
+###        sdp: string
+###      }
+###    }
+###    Response (via callback): { 
+###      success: boolean, 
+###      message?: string, 
+###      callRecordId?: string  // ID of created call record
+###    }
+###    If receiver offline: Push notification sent via OneSignal
+###
+### 3. answer-call
+###    Answer an incoming call.
+###    Payload: {
+###      callerId: string,      // ID of the caller
+###      answer: {              // WebRTC SDP answer
+###        type: "answer",
+###        sdp: string
+###      }
+###    }
+###    Response (via callback): { success: boolean, message?: string }
+###
+### 4. ice-candidate
+###    Send ICE candidate to peer (no callback).
+###    Payload: {
+###      receiverId: string,    // ID of the peer
+###      candidate: {           // WebRTC ICE candidate
+###        candidate?: string,
+###        sdpMid?: string,
+###        sdpMLineIndex?: number
+###      }
+###    }
+###
+### 5. reject-call
+###    Reject an incoming call.
+###    Payload: {
+###      receiverId: string     // ID of the caller (who you're rejecting)
+###    }
+###    Response (via callback): { success: boolean, message?: string }
+###
+### 6. end-call
+###    End an active call.
+###    Payload: {
+###      receiverId: string     // ID of the other participant
+###    }
+###    Response (via callback): { success: boolean, message?: string }
+###
+### 7. get-online-users
+###    Request list of all currently online users.
+###    Payload: none (empty event)
+###    Response: Emits 'online-users' event with user list
+###    Example: socket.emit('get-online-users');
+###
+### ────────────────────────────────────────────────────
+### 📥 SERVER → CLIENT EVENTS
+### ────────────────────────────────────────────────────
+###
+### 1. registered
+###    Confirmation of successful registration.
+###    Payload: { userId: string, message: string }
+###
+### 2. incoming-call
+###    Received when someone is calling you.
+###    Payload: {
+###      callerId: string,
+###      callerName: string,
+###      offer: { type: "offer", sdp: string },
+###      callRecordId?: string
+###    }
+###
+### 3. call-answered
+###    Received when callee answers your call.
+###    Payload: {
+###      receiverId: string,
+###      receiverName: string,
+###      answer: { type: "answer", sdp: string }
+###    }
+###
+### 4. ice-candidate
+###    Received ICE candidate from peer.
+###    Payload: {
+###      senderId: string,
+###      candidate: { candidate?, sdpMid?, sdpMLineIndex? }
+###    }
+###
+### 5. call-rejected
+###    Received when callee rejects your call.
+###    Payload: {
+###      receiverId: string,
+###      reason?: string
+###    }
+###
+### 6. call-ended
+###    Received when other participant ends the call.
+###    Payload: {
+###      endedBy: string,
+###      reason?: string
+###    }
+###
+### 7. user-online
+###    Broadcast when a user connects.
+###    Payload: { userId: string, userName: string }
+###
+### 8. user-offline
+###    Broadcast when a user disconnects.
+###    Payload: { userId: string, userName: string }
+###
+### 9. online-users
+###    Response to get-online-users request.
+###    Payload: { 
+###      users: Array<{ 
+###        userId: string, 
+###        userName: string,
+###        connectedAt: string 
+###      }>,
+###      count: number 
+###    }
+###
+### 10. error
+###    Received on socket errors.
+###    Payload: {
+###      code: "UNAUTHORIZED" | "INVALID_PAYLOAD" | "USER_NOT_FOUND" | 
+###            "USER_OFFLINE" | "CALL_FAILED" | "INTERNAL_ERROR",
+###      message: string,
+###      details?: object
+###    }
+###
+### ────────────────────────────────────────────────────
+### 🔄 COMPLETE CALL FLOW EXAMPLE
+### ────────────────────────────────────────────────────
+###
+### CALLER (User A):
+### 1. Connect with JWT → auto-registered
+### 2. Create RTCPeerConnection, add local stream
+### 3. Create offer: const offer = await pc.createOffer()
+### 4. Set local description: await pc.setLocalDescription(offer)
+### 5. Emit: socket.emit('call-user', { callerId: myId, receiverId: targetId, offer })
+### 6. Listen: socket.on('call-answered', async ({ answer }) => {
+###      await pc.setRemoteDescription(answer);
+###    });
+### 7. Exchange ICE: pc.onicecandidate = (e) => {
+###      if (e.candidate) socket.emit('ice-candidate', { receiverId: targetId, candidate: e.candidate });
+###    };
+### 8. Receive ICE: socket.on('ice-candidate', async ({ candidate }) => {
+###      await pc.addIceCandidate(candidate);
+###    });
+###
+### CALLEE (User B):
+### 1. Connect with JWT → auto-registered
+### 2. Listen: socket.on('incoming-call', async ({ callerId, callerName, offer }) => {
+###      // Show UI: "Incoming call from {callerName}"
+###      const pc = new RTCPeerConnection(config);
+###      await pc.setRemoteDescription(offer);
+###      const answer = await pc.createAnswer();
+###      await pc.setLocalDescription(answer);
+###      socket.emit('answer-call', { callerId, answer });
+###    });
+### 3. Exchange ICE candidates (same as caller)
+###
+### ────────────────────────────────────────────────────
+### 📊 CALL HISTORY (Database)
+### ────────────────────────────────────────────────────
+###
+### Call records are automatically persisted in MongoDB:
+### - Status: MISSED | REJECTED | ANSWERED | COMPLETED
+### - Duration calculated automatically for completed calls
+### - Accessible via videoCallService (not exposed as REST API by default)
+###
+### Schema:
+### {
+###   callerId: ObjectId (ref: User),
+###   receiverId: ObjectId (ref: User),
+###   status: string,
+###   startedAt: Date,
+###   answeredAt?: Date,
+###   endedAt?: Date,
+###   duration?: number (seconds),
+###   createdAt: Date,
+###   updatedAt: Date
+### }
+###
+### ────────────────────────────────────────────────────
+### 🔔 PUSH NOTIFICATIONS (OneSignal)
+### ────────────────────────────────────────────────────
+###
+### When receiver is OFFLINE:
+### - Incoming call notification sent via OneSignal
+### - Title: "Incoming Call"
+### - Body: "{CallerName} is calling you"
+### - Data: { type: "video_call", callerId, callerName, callRecordId }
+###
+### Missed call notification:
+### - Title: "Missed Call"
+### - Body: "You missed a call from {CallerName}"
+###
+### Required ENV vars:
+### ONESIGNAL_APP_ID=your-app-id
+### ONESIGNAL_REST_API_KEY=your-api-key
+###
+### ────────────────────────────────────────────────────
+### ⚙️ CONFIGURATION
+### ────────────────────────────────────────────────────
+###
+### Environment Variables:
+### - ONESIGNAL_APP_ID: OneSignal App ID
+### - ONESIGNAL_REST_API_KEY: OneSignal REST API Key
+### - REDIS_URL: (Optional) For multi-server scaling
+### - CORS_ORIGINS: Comma-separated allowed origins
+###
+### Call Timeout: 30 seconds (unanswered calls marked as MISSED)
+### Transport: WebSocket preferred, polling fallback
+### ====================================================
+### 👥 ONLINE-OFFLINE USERS (PRESENCE SYSTEM)
+### ====================================================
+### 
+### Real-time user presence tracking for showing online/offline status.
+### Built on Socket.IO with automatic status updates.
+###
+### ────────────────────────────────────────────────────
+### 🌟 FEATURES
+### ────────────────────────────────────────────────────
+### 
+### ✅ Real-time online/offline status
+### ✅ Multi-device support (same user on multiple devices)
+### ✅ Automatic status updates on connect/disconnect
+### ✅ Grace period for reconnections (10 seconds)
+### ✅ Get list of all online users
+### ✅ User count tracking
+### ✅ Presence timestamps
+### ✅ Broadcast notifications when users come online/offline
+###
+### ────────────────────────────────────────────────────
+### 📱 MOBILE IMPLEMENTATION GUIDE
+### ────────────────────────────────────────────────────
+###
+### 1. CONNECTION & AUTHENTICATION:
+### ─────────────────────────────────
+### import { io } from 'socket.io-client';
+### 
+### const socket = io('http://your-server.com', {
+###   auth: {
+###     token: 'USER_JWT_TOKEN'  // Required: Valid JWT token
+###   },
+###   transports: ['websocket'],  // Prefer WebSocket for real-time
+###   reconnection: true,         // Auto-reconnect on disconnect
+###   reconnectionAttempts: 5,    // Max reconnection attempts
+###   reconnectionDelay: 1000,    // Delay between attempts (ms)
+### });
+###
+### 2. AUTOMATIC REGISTRATION:
+### ─────────────────────────────────
+### // User is automatically registered on successful connection
+### socket.on('connect', () => {
+###   console.log('Connected & registered');
+###   // User is now ONLINE - no manual registration needed
+### });
+###
+### socket.on('registered', (data) => {
+###   console.log('Registration confirmed:', data.userId);
+### });
+###
+### 3. LISTENING FOR STATUS CHANGES:
+### ─────────────────────────────────
+### // When any user comes online
+### socket.on('user-online', (data) => {
+###   console.log(`${data.userName} is now online`);
+###   // Update UI: Show green dot, enable call button, etc.
+###   updateUserStatus(data.userId, 'online');
+### });
+###
+### // When any user goes offline
+### socket.on('user-offline', (data) => {
+###   console.log(`${data.userName} is now offline`);
+###   // Update UI: Show grey dot, disable call button, etc.
+###   updateUserStatus(data.userId, 'offline');
+### });
+###
+### 4. GET ALL ONLINE USERS:
+### ─────────────────────────────────
+### // Request list of online users
+### socket.emit('get-online-users');
+###
+### // Listen for response
+### socket.on('online-users', (data) => {
+###   console.log(`${data.count} users online`);
+###   data.users.forEach(user => {
+###     console.log(`- ${user.userName} (since ${user.connectedAt})`);
+###     updateUserStatus(user.userId, 'online');
+###   });
+### });
+###
+### 5. HANDLING DISCONNECTIONS:
+### ─────────────────────────────────
+### socket.on('disconnect', (reason) => {
+###   console.log('Disconnected:', reason);
+###   // Your status is now OFFLINE
+###   // Show reconnecting UI if needed
+### });
+###
+### socket.on('connect_error', (error) => {
+###   if (error.message === 'Authentication failed') {
+###     // Token expired or invalid
+###     // Refresh token and reconnect
+###     refreshTokenAndReconnect();
+###   }
+### });
+###
+### ────────────────────────────────────────────────────
+### 🔧 IMPLEMENTATION DETAILS
+### ────────────────────────────────────────────────────
+###
+### MULTI-DEVICE SUPPORT:
+### - Same user can connect from multiple devices
+### - User shown as online if ANY device is connected
+### - User goes offline only when ALL devices disconnect
+### - Each device has unique socket ID
+###
+### RECONNECTION GRACE PERIOD:
+### - 10-second grace period on disconnect
+### - If user reconnects within 10 seconds:
+###   • No 'user-offline' event broadcast
+###   • Active calls remain intact
+###   • Seamless experience for temporary network issues
+###
+### STATUS SYNCHRONIZATION:
+### - On app launch: Connect → Auto-register → Get online users
+### - On app foreground: Socket reconnects automatically
+### - On app background: Socket may disconnect (depends on OS)
+### - On network change: Socket auto-reconnects
+###
+### ────────────────────────────────────────────────────
+### 📊 UI/UX RECOMMENDATIONS
+### ────────────────────────────────────────────────────
+###
+### 1. USER LIST SCREEN:
+### ┌─────────────────────────┐
+### │ Users                   │
+### ├─────────────────────────┤
+### │ 🟢 John Doe      [📞]  │  ← Online (green dot)
+### │ 🟢 Jane Smith    [📞]  │  ← Call button enabled
+### │ ⚫ Bob Wilson          │  ← Offline (grey dot)
+### │ 🟢 Alice Brown   [📞]  │  ← Call button disabled for offline
+### └─────────────────────────┘
+###
+### 2. STATUS INDICATORS:
+### - 🟢 Green dot: User is online
+### - ⚫ Grey dot: User is offline
+### - 🟡 Yellow dot: User is away/idle (future feature)
+### - Show "last seen" for offline users (if stored)
+###
+### 3. REAL-TIME UPDATES:
+### - Animate status changes (fade in/out)
+### - Show toast: "John is now online"
+### - Update immediately without refresh
+### - Sort online users first
+###
+### 4. CONNECTION STATUS BAR:
+### ┌─────────────────────────┐
+### │ 🟢 Connected           │  ← Show at top/bottom
+### └─────────────────────────┘
+### ┌─────────────────────────┐
+### │ 🔄 Reconnecting...     │  ← During reconnection
+### └─────────────────────────┘
+### ┌─────────────────────────┐
+### │ ❌ Disconnected        │  ← When offline
+### └─────────────────────────┘
+###
+### ────────────────────────────────────────────────────
+### 🎯 BEST PRACTICES
+### ────────────────────────────────────────────────────
+###
+### 1. EFFICIENT UPDATES:
+### - Cache online status locally
+### - Update UI only when status changes
+### - Batch updates if multiple users change status
+###
+### 2. ERROR HANDLING:
+### - Show offline mode when disconnected
+### - Queue actions to retry when reconnected
+### - Gracefully handle token expiration
+###
+### 3. PERFORMANCE:
+### - Lazy load user profiles
+### - Virtualize long user lists
+### - Throttle status updates if needed
+###
+### 4. USER EXPERIENCE:
+### - Show loading state on initial connect
+### - Indicate stale data if disconnected > 1 min
+### - Allow manual refresh of online users list
+### - Show connection quality indicator
+###
+### ────────────────────────────────────────────────────
+### 📱 REACT NATIVE EXAMPLE
+### ────────────────────────────────────────────────────
+###
+### import React, { useEffect, useState } from 'react';
+### import { View, Text, FlatList, TouchableOpacity } from 'react-native';
+### import io from 'socket.io-client';
+###
+### const OnlineUsers = () => {
+###   const [socket, setSocket] = useState(null);
+###   const [onlineUsers, setOnlineUsers] = useState(new Map());
+###   const [connectionStatus, setConnectionStatus] = useState('connecting');
+###
+###   useEffect(() => {
+###     const newSocket = io(SERVER_URL, {
+###       auth: { token: getAuthToken() },
+###       transports: ['websocket'],
+###     });
+###
+###     newSocket.on('connect', () => {
+###       setConnectionStatus('connected');
+###       newSocket.emit('get-online-users');
+###     });
+###
+###     newSocket.on('user-online', ({ userId, userName }) => {
+###       setOnlineUsers(prev => new Map(prev).set(userId, {
+###         userName,
+###         status: 'online',
+###         lastSeen: new Date()
+###       }));
+###     });
+###
+###     newSocket.on('user-offline', ({ userId }) => {
+###       setOnlineUsers(prev => {
+###         const updated = new Map(prev);
+###         const user = updated.get(userId);
+###         if (user) {
+###           user.status = 'offline';
+###           user.lastSeen = new Date();
+###         }
+###         return updated;
+###       });
+###     });
+###
+###     newSocket.on('online-users', ({ users }) => {
+###       const usersMap = new Map();
+###       users.forEach(user => {
+###         usersMap.set(user.userId, {
+###           ...user,
+###           status: 'online'
+###         });
+###       });
+###       setOnlineUsers(usersMap);
+###     });
+###
+###     newSocket.on('disconnect', () => {
+###       setConnectionStatus('disconnected');
+###     });
+###
+###     setSocket(newSocket);
+###
+###     return () => {
+###       newSocket.close();
+###     };
+###   }, []);
+###
+###   const initiateCall = (userId) => {
+###     if (socket && onlineUsers.get(userId)?.status === 'online') {
+###       // Navigate to video call screen
+###       // Pass socket and userId
+###     }
+###   };
+###
+###   const renderUser = ({ item }) => {
+###     const user = onlineUsers.get(item[0]);
+###     return (
+###       <View style={styles.userRow}>
+###         <View style={[
+###           styles.statusDot,
+###           { backgroundColor: user.status === 'online' ? 'green' : 'gray' }
+###         ]} />
+###         <Text>{user.userName}</Text>
+###         {user.status === 'online' && (
+###           <TouchableOpacity onPress={() => initiateCall(item[0])}>
+###             <Text>📞 Call</Text>
+###           </TouchableOpacity>
+###         )}
+###       </View>
+###     );
+###   };
+###
+###   return (
+###     <View>
+###       <Text>Status: {connectionStatus}</Text>
+###       <FlatList
+###         data={Array.from(onlineUsers)}
+###         renderItem={renderUser}
+###         keyExtractor={item => item[0]}
+###       />
+###     </View>
+###   );
+### };
+###
+### ────────────────────────────────────────────────────
+### 🔍 DEBUGGING & TESTING
+### ────────────────────────────────────────────────────
+###
+### 1. TEST PRESENCE:
+### - Use multiple devices/browsers with different users
+### - Test airplane mode on/off
+### - Test app background/foreground
+### - Test token expiration scenarios
+###
+### 2. MONITOR EVENTS:
+### socket.onAny((eventName, ...args) => {
+###   console.log(`Event: ${eventName}`, args);
+### });
+###
+### 3. CHECK CONNECTION:
+### console.log('Connected:', socket.connected);
+### console.log('Socket ID:', socket.id);
+###
+### 4. FORCE RECONNECT:
+### socket.disconnect();
+### socket.connect();
+###
+### ────────────────────────────────────────────────────
+### ⚠️ IMPORTANT NOTES
+### ────────────────────────────────────────────────────
+###
+### 1. AUTHENTICATION REQUIRED:
+###    - Valid JWT token must be provided
+###    - Token is verified on each connection
+###    - Expired tokens cause disconnect
+###
+### 2. SCALABILITY:
+###    - Current implementation uses in-memory storage
+###    - Works for single server deployment
+###    - For multi-server: Redis adapter required
+###
+### 3. PRIVACY:
+###    - All authenticated users can see who's online
+###    - Consider adding privacy settings
+###    - May need friend-list filtering
+###
+### 4. BATTERY OPTIMIZATION:
+###    - WebSocket keeps connection alive
+###    - Consider disconnecting when app in background
+###    - Implement smart reconnection strategy
+###
+### 5. DATA USAGE:
+###    - Minimal data for presence updates
+###    - ~1KB per user status change
+###    - Consider batching updates on mobile
+###
+### ────────────────────────────────────────────────────
