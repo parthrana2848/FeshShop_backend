@@ -52,13 +52,6 @@ export interface ClientToServerEvents {
   'end-call': (payload: EndCallPayload, callback?: (response: { success: boolean; message?: string }) => void) => void;
   'get-online-users': () => void;
   'recover-call': (payload: RecoverCallPayload, callback?: (response: { success: boolean; message?: string; callState?: CallStatePayload }) => void) => void;
-  'chat:join': (payload: { conversationId: string }, callback?: (response: { success: boolean; message?: string }) => void) => void;
-  'chat:leave': (payload: { conversationId: string }, callback?: (response: { success: boolean; message?: string }) => void) => void;
-  'message:send': (payload: { conversationId: string; clientMessageId: string; type: string; text: string }, callback?: (response: { success: boolean; message?: string }) => void) => void;
-  'message:delivered': (payload: { conversationId: string; messageId: string }, callback?: (response: { success: boolean; message?: string }) => void) => void;
-  'message:read': (payload: { conversationId: string; messageId: string }, callback?: (response: { success: boolean; message?: string }) => void) => void;
-  'reaction:add': (payload: { conversationId: string; messageId: string; emoji: string }, callback?: (response: { success: boolean; message?: string }) => void) => void;
-  'reaction:remove': (payload: { conversationId: string; messageId: string; emoji: string }, callback?: (response: { success: boolean; message?: string }) => void) => void;
 }
 
 // Events sent from server to client
@@ -76,22 +69,6 @@ export interface ServerToClientEvents {
   'call-state': (payload: CallStatePayload) => void;
   'call-recovered': (payload: CallRecoveredPayload) => void;
   'peer-reconnecting': (payload: PeerReconnectingPayload) => void;
-  'message:new': (payload: {
-    messageId: string;
-    conversationId: string;
-    senderId: string;
-    clientMessageId: string;
-    type: string;
-    text?: string;
-    status: string;
-    createdAt: Date | string;
-    updatedAt: Date | string;
-  }) => void;
-  'message:delivered': (payload: { conversationId: string; messageId: string; readerId: string; deliveredAt: Date | string }) => void;
-  'message:read': (payload: { conversationId: string; messageId: string; readerId: string; readAt: Date | string }) => void;
-  'reaction:added': (payload: { conversationId: string; messageId: string; reaction: { userId: string; emoji: string; createdAt: Date | string , _id?: string } }) => void;
-  'reaction:removed': (payload: { conversationId: string; messageId: string; userId: string ; emoji: string }) => void;
-  'chat:error': (payload: { code: string | number; message: string; details?: Record<string, unknown> }) => void;
 }
 
 // Inter-server events (for Redis adapter scalability)

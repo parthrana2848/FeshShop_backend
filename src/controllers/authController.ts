@@ -36,7 +36,6 @@ export const login = async (req: Request, res: Response) => {
 
   res.json({
     data: {
-      token: accessToken,
       accessToken,
       refreshToken,
       user: { id: user._id, email: user.email, name: user.name }
