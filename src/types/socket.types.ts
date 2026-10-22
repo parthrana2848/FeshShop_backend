@@ -58,7 +58,7 @@ export interface ClientToServerEvents {
   'message:delivered': (payload: { conversationId: string; messageId: string }, callback?: (response: { success: boolean; message?: string }) => void) => void;
   'message:read': (payload: { conversationId: string; messageId: string }, callback?: (response: { success: boolean; message?: string }) => void) => void;
   'reaction:add': (payload: { conversationId: string; messageId: string; emoji: string }, callback?: (response: { success: boolean; message?: string }) => void) => void;
-  'reaction:remove': (payload: { conversationId: string; messageId: string; emoji: string }, callback?: (response: { success: boolean; message?: string }) => void) => void;
+  'reaction:remove': (payload: { conversationId: string; messageId: string }, callback?: (response: { success: boolean; message?: string }) => void) => void;
 }
 
 // Events sent from server to client
@@ -90,8 +90,10 @@ export interface ServerToClientEvents {
   'message:delivered': (payload: { conversationId: string; messageId: string; readerId: string; deliveredAt: Date | string }) => void;
   'message:read': (payload: { conversationId: string; messageId: string; readerId: string; readAt: Date | string }) => void;
   'reaction:added': (payload: { conversationId: string; messageId: string; reaction: { userId: string; emoji: string; createdAt: Date | string , _id?: string } }) => void;
-  'reaction:removed': (payload: { conversationId: string; messageId: string; userId: string ; emoji: string }) => void;
+  'reaction:removed': (payload: { conversationId: string; messageId: string; userId: string }) => void;
   'chat:error': (payload: { code: string | number; message: string; details?: Record<string, unknown> }) => void;
+  'payment:success': (payload: { orderId: string; transactionId: string; paymentStatus: 'PAID' }) => void;
+  'payment:failed': (payload: { orderId: string; reason: string }) => void;
 }
 
 // Inter-server events (for Redis adapter scalability)

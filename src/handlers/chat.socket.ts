@@ -274,14 +274,13 @@ export const registerChatSocket = (io: TypedServer, socket: TypedSocket): void =
         return;
       }
 
-      const { conversationId, messageId , emoji } = value;
+      const { conversationId, messageId } = value;
       const res = await chatService.removeReactionService(conversationId, messageId, user.id);
       if (res && res.removed) {
         io.to(conversationId).emit('reaction:removed', {
           conversationId,
           messageId,
           userId: user.id,
-          emoji
         });
       }
 
